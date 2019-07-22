@@ -1,10 +1,7 @@
 import  React from 'react';
-export default class PieChart extends React.Component<{},{}>{
-	render(){
-		return(
+export const PieChart = ({}) =>
 			<div>
 				<h1>This is a Pie chart</h1>
 			</div>
-		)
-	}
-}
+
+export default PieChart
