@@ -1,6 +1,6 @@
 {
   "name": "graphotronix",
-  "version": "0.3.0",
+  "version": "0.3.10",
   "private": false,
   "devDependencies": {
     "@types/jest": "24.0.15",
@@ -15,7 +15,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "build-package":"rm -rf ../dist && tsc -p special",
+    "prepublish": "rm -rf dist && mkdir dist && cp -r src/lib/styles dist/styles && tsc -p src/lib",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -36,10 +36,17 @@
   },
   "main": "dist/index.js",
   "module": "dist/index.js",
-  "files": [ "dist", "README.md" ],
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/Tevin-Brown/graphotronix"
+  },
+  "dependencies": {
+    "@types/d3": "^5.7.2",
+    "d3": "^5.9.7"
   }
-
 }

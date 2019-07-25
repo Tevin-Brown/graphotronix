@@ -1,7 +1,141 @@
 import  React from 'react';
-export const PieChart = ({}) =>
-			<div>
-				<h1>This is a Pie chart</h1>
-			</div>
 
-export default PieChart
+export interface PieChartProps {
+	data:Data[];
+	title:string;
+	width:number;
+	height:number;
+	footer?:string;
+}
+export interface Data {
+	name:string;
+	value:number;
+	color:string;
+}
+
+export default class PieChart extends React.Component<PieChartProps,{radius:number}>{
+	private svgRef?: SVGElement | null;
+	constructor(props:any) {
+        super(props);
+
+        this.state = {
+            radius: Math.min(this.props.width,this.props.height)/2,
+        };
+    }
+
+
+	drawChart(data: Data[]){
+		const { width, height } = this.props;
+		const values = data.map((el)=>el.value).sort(function(a, b){return a - b});
+		// const titles = "";
+		const ds = this.calculate(values);
+		const results = data.map((el,ind) => 
+			<path fill={el.color} d={ds[ind]} />)
+		return results;
+	}
+
+	calculate(values:number[]){
+		//this function calls helpers to get all the d attributes for the path
+		let degs = this.degrees(values)
+		let rads = this.radians(values)
+		let points = this.getPoints(rads)
+		let paths = this.makePaths(points,degs)
+		console.log(rads)
+		console.log(paths)
+		return paths;
+	}
+
+	degrees(values:number[]){
+		//this function converts all of the  values to the corresponding degree ammounts.
+		let sum = values.reduce((a,b) => a + b, 0)
+		return values.map((el:number)=>{
+			return el/sum * 360
+		})
+	}
+
+	radians(values:number[]){
+		//this function converts all of the  values to the corresponding radian ammounts.
+		let sum = values.reduce((a,b) => a + b, 0)
+		return values.map((el:number)=>{
+			return el/sum * (2 * Math.PI)
+		})
+	}
+
+	getPoints(rads:number[]){
+		//returns a list of points where x is [0] and y is [1]
+		let r = this.state.radius
+		let currentangle = 0
+		return rads.map((el:number)=>{
+			currentangle = currentangle + el
+			console.log(currentangle)
+			let result: number[] = [];
+			let x:number;
+			let y: number;
+			if (currentangle<=Math.PI/2){
+				x = r * Math.cos(Math.PI/2-currentangle)
+				y = -r * Math.sin(Math.PI/2-currentangle)
+				result.push(x)
+				result.push(y)
+				return result;
+			}
+			if (currentangle>Math.PI/2 && currentangle<=Math.PI){
+				x = r * Math.sin(Math.PI-currentangle)
+				y = r * Math.cos(Math.PI-currentangle)
+				result.push(x)
+				result.push(y)
+				return result;
+			}
+			if (currentangle>Math.PI && currentangle<=3*Math.PI/2){
+				x = -r * Math.sin(currentangle - Math.PI)
+				y = r * Math.cos(currentangle - Math.PI)
+				result.push(x)
+				result.push(y)
+				return result;
+			}
+			if (currentangle>3*Math.PI/2){
+				x = -r * Math.sin(2*Math.PI-currentangle)
+				y = -r * Math.cos(2*Math.PI-currentangle)
+				result.push(x)
+				result.push(y)
+				return result;
+			}
+		})
+	}
+
+	makePaths(points:any,degrees:number[]){
+		let currentpoint:number[];
+		let r = this.state.radius
+		return points.map((el:number[],ind:number)=>{
+			console.log(currentpoint)
+			console.log(degrees[ind])
+			let result:string;
+			if(currentpoint){
+				if(degrees[ind]>=180){
+					result= "M0,0 L"+currentpoint[0]+","+currentpoint[1]+" A"+r+","+r+" 1 1,1 "+el[0]+","+el[1]+" z"
+				}
+				else{
+					result= "M0,0 L"+currentpoint[0]+","+currentpoint[1]+" A"+r+","+r+" 1 0,1 "+el[0]+","+el[1]+" z"
+				}
+			}
+			else{
+				result = "M0,0 L0,"+ -r +"A"+r+","+r+" 1 0,1 "+el[0]+","+el[1]+" z"
+			}
+			currentpoint=el
+			return result;
+			
+		})
+
+	}
+
+	
+	render(){
+		let content = this.drawChart(this.props.data)
+		const { width, height } = this.props;
+		const {radius} = this.state;
+	    return (
+	      <svg width={width} height={height} ref={ref => (this.svgRef = ref)}  viewBox={""+ -radius + " " + -radius + " "  + width + " "  + height+""}>
+	      	{content}
+	      </svg>
+	    );
+	}
+}
