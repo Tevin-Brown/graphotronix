@@ -1,4 +1,6 @@
 import  React from 'react';
+import  '../styles/PieChart.css';
+
 
 export interface PieChartProps {
 	data:Data[];
@@ -7,30 +9,63 @@ export interface PieChartProps {
 	height:number;
 	footer?:string;
 }
+export interface PieChartState{
+	radius:number;
+	showTitle:boolean;
+	titleText:string;
+}
 export interface Data {
 	name:string;
 	value:number;
 	color:string;
 }
 
-export default class PieChart extends React.Component<PieChartProps,{radius:number}>{
+export default class PieChart extends React.Component<PieChartProps,PieChartState>{
 	private svgRef?: SVGElement | null;
 	constructor(props:any) {
         super(props);
 
         this.state = {
             radius: Math.min(this.props.width,this.props.height)/2,
+            showTitle: false,
+            titleText:""
         };
+        this.handleMouseEnter = this.handleMouseEnter.bind(this)
+  		this.handleMouseMove = this.handleMouseMove.bind(this)
+  		this.handleMouseLeave = this.handleMouseLeave.bind(this)
     }
+
+	handleMouseEnter(e:React.MouseEvent<SVGPathElement>) {
+		var rec:any = e.currentTarget.getBoundingClientRect();
+	  (document.getElementById("titleText") as HTMLParagraphElement).style.visibility ="visible";
+	  (document.getElementById("titleText") as HTMLParagraphElement).style.top = (e.clientY-rec.top).toString()+"px";
+	  (document.getElementById("titleText") as HTMLParagraphElement).style.left = (e.clientX-rec.top).toString()+"px";
+	  this.setState({titleText:e.currentTarget.id})
+	}
+	handleMouseMove(e:React.MouseEvent<SVGPathElement>){
+		var rec:any = e.currentTarget.getBoundingClientRect();
+	  (document.getElementById("titleText") as HTMLParagraphElement).style.top = (e.clientY-rec.top).toString()+"px";
+	  (document.getElementById("titleText") as HTMLParagraphElement).style.left = (e.clientX-rec.top).toString()+"px";
+	}
+	handleMouseLeave(e:React.MouseEvent<SVGPathElement>) {
+		var rec:any = e.currentTarget.getBoundingClientRect();
+	  (document.getElementById("titleText") as HTMLParagraphElement).style.visibility ="hidden";
+	  (document.getElementById("titleText") as HTMLParagraphElement).style.top = (e.clientY-rec.top).toString()+"px";
+	  (document.getElementById("titleText") as HTMLParagraphElement).style.left = (e.clientX-rec.top).toString()+"px";
+	}
 
 
 	drawChart(data: Data[]){
 		const { width, height } = this.props;
-		const values = data.map((el)=>el.value).sort(function(a, b){return a - b});
+		data = data.sort(function(a, b){return a.value - b.value})
+		const values = data.map((el)=>el.value);
 		// const titles = "";
 		const ds = this.calculate(values);
 		const results = data.map((el,ind) => 
-			<path fill={el.color} d={ds[ind]} />)
+			<path fill={el.color} d={ds[ind]} id={el.name} 
+			onMouseEnter={this.handleMouseEnter}
+          	onMouseMove={this.handleMouseMove}
+          	onMouseLeave={this.handleMouseLeave}/>)
 		return results;
 	}
 
@@ -40,8 +75,6 @@ export default class PieChart extends React.Component<PieChartProps,{radius:numb
 		let rads = this.radians(values)
 		let points = this.getPoints(rads)
 		let paths = this.makePaths(points,degs)
-		console.log(rads)
-		console.log(paths)
 		return paths;
 	}
 
@@ -67,7 +100,6 @@ export default class PieChart extends React.Component<PieChartProps,{radius:numb
 		let currentangle = 0
 		return rads.map((el:number)=>{
 			currentangle = currentangle + el
-			console.log(currentangle)
 			let result: number[] = [];
 			let x:number;
 			let y: number;
@@ -106,8 +138,6 @@ export default class PieChart extends React.Component<PieChartProps,{radius:numb
 		let currentpoint:number[];
 		let r = this.state.radius
 		return points.map((el:number[],ind:number)=>{
-			console.log(currentpoint)
-			console.log(degrees[ind])
 			let result:string;
 			if(currentpoint){
 				if(degrees[ind]>=180){
@@ -133,9 +163,14 @@ export default class PieChart extends React.Component<PieChartProps,{radius:numb
 		const { width, height } = this.props;
 		const {radius} = this.state;
 	    return (
-	      <svg width={width} height={height} ref={ref => (this.svgRef = ref)}  viewBox={""+ -radius + " " + -radius + " "  + width + " "  + height+""}>
-	      	{content}
-	      </svg>
+	    	<div style={{position:"relative"}}>
+		      <svg width={width} height={height} ref={ref => (this.svgRef = ref)}  viewBox={""+ -radius + " " + -radius + " "  + width + " "  + height+""}>
+		      	{content}
+		      </svg>
+		      <p id="titleText" style={{position:"absolute",visibility:"hidden",top:0,left:0}}>
+	      		{this.state.titleText}
+	      	  </p>
+	      </div>
 	    );
 	}
 }
